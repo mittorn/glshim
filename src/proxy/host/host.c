@@ -2,7 +2,9 @@
 
 #ifndef HOST_C
 #define HOST_C
-void glIndexedCall(const indexed_call_t *packed, void *ret_v) {
+#include "blob.h"
+
+static inline void dispatch(const indexed_call_t *packed, void *ret_v) {
     switch (packed->func) {
         #ifndef skip_index_glAccum
         case glAccum_INDEX: {
@@ -15961,4 +15963,14 @@ void glIndexedCall(const indexed_call_t *packed, void *ret_v) {
         #endif
     }
 }
+
+void glIndexedCall(blob_t *blob, void *ret_v) {
+    blob_iter(blob);
+    const indexed_call_t *packed;
+    while ((packed = (indexed_call_t *)blob) != NULL) {
+        dispatch(packed, ret_v);
+    }
+    blob_reset(blob);
+}
+
 #endif

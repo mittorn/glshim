@@ -14,6 +14,11 @@ void *blob_new(uint32_t size) {
     return blob;
 }
 
+bool blob_empty(blob_t *blob) {
+    uint32_t *len = (uint32_t *)((uintptr_t)blob + blob->pos);
+    return *len == 0;
+}
+
 void blob_reset(blob_t *blob) {
     blob->pos = sizeof(blob_t);
     uint32_t *len = (uint32_t *)((uintptr_t)blob + blob->pos);

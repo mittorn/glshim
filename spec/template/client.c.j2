@@ -5,11 +5,34 @@
 #include <string.h>
 #include <stdio.h>
 {{ super() }}
+#include "blob.h"
 
 {% endblock %}
 
 {% block main %}
 {{ super() }}
+
+#define KB 1024
+#define MB (KB * 1024)
+#define GB (MB * 1024)
+
+static blob_t *blob = NULL;
+
+__attribute__((constructor))
+static void batch_init() {
+    blob = blob_new(1 * MB);
+}
+
+static void batch_flush() {
+    if (! blob_empty(blob)) {
+        syscall(SYS_proxy, (void *)blob, NULL);
+        blob_reset(blob);
+    }
+}
+
+static void *batch_alloc(size_t size) {
+    return blob_append(blob, size);
+}
 
 snd_config_t *snd_config = NULL;
 
@@ -37,16 +60,36 @@ __GLXextFuncPtr glXGetProcAddress(const GLubyte *name) {
 {% endblock %}
 
 {% block call %}
-    {{ func.name }}_INDEXED packed_data;
-    packed_data.func = {{ func.name }}_INDEX;
+    {% set batch = func.void %}
     {% for arg in func.args %}
-    packed_data.args.a{{ loop.index }} = ({{ arg.type|unconst }}){{ arg.name }};
+        {% if '*' in arg.type %}
+            {% set batch = false %}
+        {% endif %}
     {% endfor %}
+{% if batch %}
+#ifdef no_batch_{{ func.name }}
+{% endif %}
+    batch_flush();
+{% if batch %}
+#endif
+{% endif %}
+    {{ func.name }}_INDEXED *data = batch_alloc(sizeof({{ func.name }}_INDEXED));
+    data->func = {{ func.name }}_INDEX;
+    {% for arg in func.args %}
+    data->args.a{{ loop.index }} = ({{ arg.type|unconst }}){{ arg.name }};
+    {% endfor %}
+{% if batch %}
+#ifdef no_batch_{{ func.name }}
+{% endif %}
     {% if not func.void %}
     {{ func.return }} ret;
-    syscall(SYS_proxy, (void *)&packed_data, &ret);
+    syscall(SYS_proxy, (void *)data, &ret);
     return ret;
     {% else %}
-    syscall(SYS_proxy, (void *)&packed_data, NULL);
+    syscall(SYS_proxy, (void *)data, NULL);
     {% endif %}
+    blob_reset(blob);
+{% if batch %}
+#endif
+{% endif %}
 {% endblock %}
