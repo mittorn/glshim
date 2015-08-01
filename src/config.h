@@ -3,3 +3,4 @@
 
 #define MAX_TEX 4
 #define GL_TEXTURE_MAX (GL_TEXTURE0 + MAX_TEX)
+#define RING_SIZE (1024 * 8192)

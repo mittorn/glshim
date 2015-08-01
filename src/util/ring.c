@@ -11,9 +11,9 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "ring.h"
 
-#define RING_SIZE (1024 * 4096)
 #define ALIGN(x) (((x) & 3) ? (((x) & ~3) + 4) : (x))
 
 static void ring_wait_read(ring_t *ring) {
