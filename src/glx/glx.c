@@ -273,28 +273,32 @@ static void scan_env() {
     const char *create_window = getenv("LIBGL_CREATE_WINDOW");
     if (remote) {
         unsetenv("LIBGL_REMOTE");
-        if (strcmp(remote, "1") == 0) {
-            remote = NULL;
-        }
-        int pid = remote_spawn(remote);
-        if (pid > 0) {
-            state.remote = pid;
-            printf("libGL: remote pid %d\n", pid);
-        }
+        if (strcmp(remote, "0")) {
+			if (strcmp(remote, "1") == 0) {
+				remote = NULL;
+			}
+			int pid = remote_spawn(remote);
+			if (pid > 0) {
+				state.remote = pid;
+				printf("libGL: remote pid %d\n", pid);
+			}
+		}
     }
     else // Don't get window size if remote enabled
     if(create_window) {
-		g_create_window = 1;
-		if(strcmp(create_window, "1")) {
-			g_window_width = atoi(create_window);
-			create_window = strchr(create_window, 'x');
-			if(create_window) {
-				g_window_height = atoi(++create_window);
-				printf("libGL: window size set to %dx%d\n", g_window_width, g_window_height);
-			}
-			else {
-				printf("libGL: use LIBGL_CREATE_WINDOW=<width>x<height>\n");
-				g_window_width = 640;
+		if(strcmp(create_window, "0")) {
+			g_create_window = 1;
+			if(strcmp(create_window, "1")) {
+				g_window_width = atoi(create_window);
+				create_window = strchr(create_window, 'x');
+				if(create_window) {
+					g_window_height = atoi(++create_window);
+					printf("libGL: window size set to %dx%d\n", g_window_width, g_window_height);
+				}
+				else {
+					printf("libGL: use LIBGL_CREATE_WINDOW=<width>x<height>\n");
+					g_window_width = 640;
+				}
 			}
 		}
 	}
